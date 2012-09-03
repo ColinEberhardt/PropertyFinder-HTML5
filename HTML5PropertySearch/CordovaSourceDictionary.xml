@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This file is auto-generated, do not edit! -jm -->
+<CordovaSourceDictionary>
+    <FilePath Value="www\app.js"/>
+    <FilePath Value="www\img\about.png"/>
+    <FilePath Value="www\img\addToFavourites.png"/>
+    <FilePath Value="www\img\background.png"/>
+    <FilePath Value="www\img\favourited.png"/>
+    <FilePath Value="www\img\background.jpg"/>
+    <FilePath Value="www\img\favourites.png"/>
+    <FilePath Value="www\index.html"/>
+    <FilePath Value="www\intellisense.js"/>
+    <FilePath Value="www\lib\cordova-1.9.0.js"/>
+    <FilePath Value="www\lib\jquery-1.6.1.min.js"/>
+    <FilePath Value="www\lib\jquery.jsonp-2.1.4.min.js"/>
+    <FilePath Value="www\lib\jquery.tmpl.min.js"/>
+    <FilePath Value="www\lib\knockout-2.1.0.js"/>
+    <FilePath Value="www\model\JSONDataSource.js"/>
+    <FilePath Value="www\model\JSONFileDataSource.js"/>
+    <FilePath Value="www\model\Location.js"/>
+    <FilePath Value="www\model\Property.js"/>
+    <FilePath Value="www\model\PropertyDataSource.js"/>
+    <FilePath Value="www\model\PropertyDataSourceResponse.js"/>
+    <FilePath Value="www\namespaces.js"/>
+    <FilePath Value="www\viewModel\AboutViewModel.js"/>
+    <FilePath Value="www\viewModel\ApplicationViewModel.js"/>
+    <FilePath Value="www\viewModel\FavouritesViewModel.js"/>
+    <FilePath Value="www\viewModel\GeolocationViewModel.js"/>
+    <FilePath Value="www\viewModel\LocationViewModel.js"/>
+    <FilePath Value="www\viewModel\PropertySearchViewModel.js"/>
+    <FilePath Value="www\viewModel\PropertyViewModel.js"/>
+    <FilePath Value="www\viewModel\SearchResultsViewModel.js"/>
+    <FilePath Value="www\viewModel\util.js"/>
+    <FilePath Value="www\view\style.css"/>
+</CordovaSourceDictionary>

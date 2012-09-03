@@ -1,0 +1,299 @@
+﻿<!DOCTYPE html>
+<html>
+<head class="ui-mobile">
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0" />
+
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+
+  <link rel="apple-touch-icon" href="ApplicationIcon.png"/>
+  <link rel="apple-touch-startup-image" href="SplashScreenImage.jpg" />  
+  
+  <script src="lib/iscroll.js" type="text/javascript"></script>
+  <script src="lib/jquery-1.6.1.min.js" type="text/javascript"></script>
+  <script src="lib/jquery.tmpl.min.js" type="text/javascript"></script>
+  <script src="lib/knockout-2.1.0.js" type="text/javascript"></script>
+  <script src="lib/jquery.jsonp-2.1.4.min.js" type="text/javascript"></script> 
+	
+	<script src="namespaces.js" type="text/javascript"></script>
+	
+  <script src="model/Property.js" type="text/javascript"></script>
+  <script src="model/Location.js" type="text/javascript"></script>
+  <script src="model/PropertyDataSourceResponse.js" type="text/javascript"></script>
+  <script src="model/PropertyDataSource.js" type="text/javascript"></script>
+  <script src="model/JSONDataSource.js" type="text/javascript"></script>
+
+  <script src="viewModel/util.js" type="text/javascript"></script>
+	<script src="viewModel/AboutViewModel.js" type="text/javascript"></script>
+  <script src="viewModel/PropertyViewModel.js" type="text/javascript"></script>
+  <script src="viewModel/ApplicationViewModel.js" type="text/javascript"></script>
+  <script src="viewModel/PropertySearchViewModel.js" type="text/javascript"></script>
+  <script src="viewModel/LocationViewModel.js" type="text/javascript"></script>
+	<script src="viewModel/GeolocationViewModel.js" type="text/javascript"></script>
+  <script src="viewModel/SearchResultsViewModel.js" type="text/javascript"></script>
+	<script src="viewModel/FavouritesViewModel.js" type="text/javascript"></script>
+
+  <script src="app.js" type="text/javascript"></script>
+  <link rel="stylesheet" type="text/css" href="view/jquery.mobile-1.0rc2.css" />
+  
+  <style type="text/css" media="all">
+    .iScrollWrapper
+    {
+      position:absolute;
+      z-index:1;
+      top:45px; bottom:0; left:0;
+      width:100%;
+      overflow:auto;
+    }
+    
+    img.ui-li-thumb 
+    {
+      -webkit-transition: opacity 1s ease-in-out;
+	    -moz-transition: opacity 1s ease-in-out;
+	    -webkit-backface-visibility: hidden;
+	     opacity: 0;
+    }
+        
+    img.shown
+    {
+      opacity: 1;
+    }
+        
+    .ui-content .ui-listview {
+      margin:0;
+    }
+    
+    .ui-li-thumb {
+      top: 10px;
+      left:6px;
+    }
+    
+    .propertyView .price
+    {
+      font-weight: bold;
+    }
+    
+    .propertyView .image
+    {
+      width: 100%;
+      margin: 10px 0;
+    }
+    
+    .propertyView h3
+    {
+      margin: 0 0 4px 0;
+    }
+    
+    .spinner
+    {
+       height: 25px;
+      margin: 4px;
+      position: absolute;
+      right: 20px;
+    }
+    
+    p
+    {
+      margin: 0.3em 0;
+    }
+    
+    .ui-li-desc span 
+    {
+      font-weight: bold;
+    }
+  </style>
+  <title>Untitled Page</title>
+</head>
+<body class="ui-mobile-viewport"> 
+  <script id="propertySearchView" type="text/x-jquery-tmpl">  
+		<div>
+			<p>Use the form below to search for houses to buy:</p>
+			
+			  <div class="searchForm">
+          <img class="spinner"
+               data-bind="visible: isSearchEnabled() == false"
+               src="img/spinner.gif" />
+					<input type="text"
+                 class="ui-input-text ui-body-c ui-corner-all ui-shadow-inset"
+                 data-bind="value: searchDisplayString,
+                            enable: isSearchEnabled,
+                            valueUpdate:'afterkeydown'"/>
+					 
+          <div class="ui-btn ui-btn-inline ui-btn-corner-all ui-shadow ui-btn-up-c">
+            <span class="ui-btn-inner ui-btn-corner-all">
+              <span class="ui-btn-text">Go</span>
+            </span>
+            <input class="ui-btn-hidden" type="button" value="Go"
+                            data-bind="enable: isSearchEnabled, 
+                                              click: executeSearch"/>
+          </div>
+
+          <div class="ui-btn ui-btn-inline ui-btn-corner-all ui-shadow ui-btn-up-c">
+            <span class="ui-btn-inner ui-btn-corner-all">
+              <span class="ui-btn-text">My location</span>
+            </span>
+            <input class="ui-btn-hidden" type="button" value="My location"
+                        data-bind="enable: isSearchEnabled,
+                                          click: searchMyLocation"/>
+          </div>
+           
+          
+			</div>
+      
+			<p class="userMessage" data-bind="text:userMessage"/>
+			
+      <div data-bind="visible: locations().length > 0">
+			  <p>Please select a location below:</p>
+			  <ul class="ui-listview ui-listview-inset ui-corner-all ui-shadow"
+              data-bind='template: { name: "locationTemplate",
+                                     foreach: locations }'/>
+      </div>
+
+      <div data-bind="visible: recentSearches().length > 0 && locations().length == 0">
+			  <h3>Recent Searches</h3>
+			  <ul class="ui-listview ui-listview-inset ui-corner-all ui-shadow"
+              data-bind='template: { name: "locationTemplate",
+                                     foreach: recentSearches }'/>
+      </div>
+
+		</div>	
+  </script>	
+
+  <script id="searchResultsView" type="text/x-jquery-tmpl">
+    <div>
+			<div class="iScrollWrapper" >
+        <div>
+          <ul class="ui-listview"
+              data-bind='template: { name: "propertyThumbnailView",
+                                    foreach: properties}'/>
+
+          <div class="pullUp"
+                data-bind="visible: properties().length < totalResults">
+            <ul class="ui-listview">
+              <li class="ui-btn ui-btn-icon-right ui-li ui-li-has-thumb ui-btn-up-c">
+                <div class="ui-btn-inner ui-li">
+                  <div class="ui-btn-text">
+                    <a class="ui-link-inherit" href="#">
+                      <img class="ui-li-thumb" src="img/pull-icon.png">            
+                      <h3 class="ui-li-heading"><span class="pullUpLabel">Pull up to load more ...</span></h3>
+                      <p class="ui-li-desc">
+                        Results for <span class="searchString" data-bind="text: searchLocation.displayString"/>, showing
+					              <span data-bind="text: properties().length"/> of 
+					              <span data-bind="text: totalResults"/> properties
+                      </p>
+                    </a>
+                  </div>
+                </div>
+              </li>
+            </ul> 
+          </div>
+         </div>
+			</div>
+    </div>
+  </script>
+
+  <script id="propertyThumbnailView" type="text/x-jquery-tmpl">  
+    <li class="ui-btn ui-btn-icon-right ui-li-has-arrow ui-li ui-li-has-thumb ui-btn-up-c"
+         data-bind="click: select">
+      <div class="ui-btn-inner ui-li">
+        <div class="ui-btn-text">
+          <a class="ui-link-inherit" href="#">
+            <div class="ui-li-thumb" style="background: #999; width:80px; height:60px;">&nbsp;</div>
+            <img class="ui-li-thumb" data-bind="attr: { src: thumbnailUrl }">
+            
+            <h2 class="ui-li-heading">
+               £ <span data-bind="text: price"/>
+            </h2>
+            <p class="ui-li-desc"><span data-bind="text: title"/>, <span data-bind="text: bedrooms"/> bed <span data-bind="text: propertyType"/></p>
+          </a>
+        </div>
+        <span class="ui-icon ui-icon-arrow-r ui-icon-shadow"></span>
+      </div>
+    </li>
+  </script>
+  
+  <script id="propertyView" type="text/x-jquery-tmpl">	
+		<div class="propertyView">
+      <h3 class="price">£<span data-bind="text: price"/></h3>
+			<div data-bind="text: title"/>			
+			<img class="image" data-bind="attr: { src: thumbnailUrl }"/>      
+			<div><span data-bind="text: bedrooms"/> bed <span data-bind="text: propertyType"/><span data-bind="visible: bathrooms !== ''">, <span data-bind="text: bathrooms"/> bathroom</span></div>
+			<div data-bind="text: summary"/>
+		</div>
+  </script>
+  
+  <script id="locationTemplate" type="text/x-jquery-tmpl">    
+    <li class="ui-btn ui-btn-icon-right ui-li-has-arrow ui-li-has-count ui-li ui-btn-up-c"        
+         data-bind="click: propertySearchViewModel.selectLocation,
+                    css: { 'ui-corner-top' : firstElement, 'ui-corner-bottom' : lastElement }">
+      <div class="ui-btn-inner ui-li" aria-hidden="true">
+        <div class="ui-btn-text">
+          <a class="ui-link-inherit" href="#">
+            <span data-bind="text: displayString"/>
+            <span class="ui-li-count ui-btn-up-c ui-btn-corner-all"
+                  data-bind="text: totalResults, visible: totalResults > 0"/>
+          </a>
+        </div>
+        <span class="ui-icon ui-icon-arrow-r ui-icon-shadow"></span>
+      </div>
+    </li>
+  </script>
+
+  <script id="favouritesView" type="text/x-jquery-tmpl">
+		<div class="iScrollWrapper" >
+      <div>
+        <ul class="ui-listview"
+            data-bind='template: { name: "propertyThumbnailView",
+                                  foreach: properties}'/>            
+        </div>
+		</div>
+	</script>
+
+  <div class="ui-page ui-body-c ui-page-active"  style="display:block">
+    <div class="ui-header ui-bar-b">    
+      <!-- back button -->
+      <a class="ui-btn-left ui-btn ui-btn-icon-left ui-btn-corner-all ui-shadow ui-btn-up-b"
+        href="javascript: return false;"
+        data-bind="click: back,  visible: backButtonRequired">
+        <span class="ui-btn-inner ui-btn-corner-all">
+          <span class="ui-btn-text">Back</span>
+          <span class="ui-icon ui-icon-arrow-l ui-icon-shadow"></span>
+        </span>
+      </a>
+
+      <h1 class="ui-title">Property Finder</h1>
+
+      <div data-bind="visible: currentView() != 'propertyView' && currentView() != 'favouritesView'" >
+        <a  class="ui-btn-right ui-btn ui-btn-icon-left ui-btn-corner-all ui-shadow ui-btn-up-b"
+            href="javascript: return false;"
+            data-bind="click: function() { navigateTo(new ViewModel.FavouritesViewModel(propertySearchViewModel)) }">
+          <span class="ui-btn-inner ui-btn-corner-all">
+            <span class="ui-btn-text">Fave</span>
+            <span class="ui-icon ui-icon-grid ui-icon-shadow"></span>
+          </span>
+        </a>
+      </div>
+
+      <div data-bind="visible: currentView() == 'propertyView'">
+        <a  class="ui-btn-right ui-btn ui-btn-icon-left ui-btn-corner-all ui-shadow ui-btn-up-b"
+            href="javascript: return false;" 
+            data-bind="click: function() { propertySearchViewModel.addToFavourites.call(propertySearchViewModel, currentViewModel()); }">
+          <span class="ui-btn-inner ui-btn-corner-all">
+            <span class="ui-btn-text">Fave</span>
+            <span class="ui-icon ui-icon-star ui-icon-shadow"
+                  data-bind="visible: currentView() == 'propertyView' && currentViewModel().isFavourite && currentViewModel().isFavourite() == false"></span>
+            <span class="ui-icon ui-icon-alert ui-icon-shadow"
+                  data-bind="visible: currentView() == 'propertyView' && currentViewModel().isFavourite && currentViewModel().isFavourite() == true"></span>
+          </span>
+        </a>
+      </div>
+    </div>
+
+    <div class="ui-content">   
+    </div>
+
+  </div>
+
+
+</body>
+</html>

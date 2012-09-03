@@ -1,0 +1,178 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=480, user-scalable=no" />
+
+  <script src="lib/jquery-1.6.1.min.js" type="text/javascript"></script>
+  <script src="lib/jquery.tmpl.min.js" type="text/javascript"></script> 
+  <script src="lib/jquery.jsonp-2.1.4.min.js" type="text/javascript"></script>
+  <script src="lib/knockout-2.1.0.js" type="text/javascript"></script>
+  <script src="lib/cordova-1.9.0.js" type="text/javascript"></script>
+  
+  <script src="namespaces.js" type="text/javascript"></script>
+  
+  <script src="model/Property.js" type="text/javascript"></script>
+  <script src="model/Location.js" type="text/javascript"></script>
+  <script src="model/PropertyDataSourceResponse.js" type="text/javascript"></script>
+  <script src="model/PropertyDataSource.js" type="text/javascript"></script>
+  <script src="model/JSONDataSource.js" type="text/javascript"></script>
+
+  <script src="viewModel/util.js" type="text/javascript"></script>
+  <script src="viewModel/AboutViewModel.js" type="text/javascript"></script>
+  <script src="viewModel/PropertyViewModel.js" type="text/javascript"></script>
+  <script src="viewModel/ApplicationViewModel.js" type="text/javascript"></script>
+  <script src="viewModel/PropertySearchViewModel.js" type="text/javascript"></script>
+  <script src="viewModel/LocationViewModel.js" type="text/javascript"></script>
+  <script src="viewModel/GeolocationViewModel.js" type="text/javascript"></script>
+  <script src="viewModel/SearchResultsViewModel.js" type="text/javascript"></script>
+  <script src="viewModel/FavouritesViewModel.js" type="text/javascript"></script>
+
+  <script src="app.js" type="text/javascript"></script>
+  <link rel="stylesheet" type="text/css" href="view/style.css" />
+  <title>Untitled Page</title>
+</head>
+<body>
+  <script id="propertySearchView" type="text/x-jquery-tmpl">
+    <div class="content noScroll">
+      <h2>Property Finder UK</h2>
+      <p>Use the form below to search for houses to buy. You can search by place-name, postcode, or click 'My location', to search in your current location!</p>
+      
+      <div class="searchForm">
+          <input type="text" data-bind="value: searchDisplayString, enable: isSearchEnabled, valueUpdate:'afterkeydown'"/>
+          <button type="submit" data-bind="enable: isSearchEnabled, click: executeSearch">Go</button>
+          <button data-bind="enable: isSearchEnabled, click: searchMyLocation">My location</button>
+      </div>
+      
+      <div class="loading" data-bind="visible: isSearchEnabled() == false">
+        Searching...
+      </div>
+      
+      <p class="userMessage" data-bind="text:userMessage"/>
+      
+      <div data-bind="visible: locations().length > 0">
+        <div>Please select a location below:</div>
+        <ul class="locationList" data-bind='template: { name: "locationTemplate",
+                                          foreach: locations }'/>
+      </div>
+
+      <div data-bind="visible: recentSearches().length > 0 && locations().length === 0">
+        <div data-bind="visible: isSearchEnabled">
+          <div>Recent searches:</div>
+          <ul class="locationList" data-bind='template: { name: "locationTemplate",
+                                            foreach: recentSearches }'/>
+        </div>
+      </div>
+    </div>
+    
+    <div class="appBar">
+      <div class="more"><div class="pip"/><div class="pip"/><div class="pip"/></div>
+      <div class="icons">
+        <div class="icon" data-bind="click: viewFavourites">
+          <img src="img/favourites.png"/>
+          <div class="iconText">favourites</div>
+        </div>
+        <div class="icon" data-bind="click: viewAbout">
+          <img src="img/about.png"/>
+          <div class="iconText">about</div>
+        </div>
+      </div>
+    </div>
+  </script>  
+  <script id="aboutView" type="text/x-jquery-tmpl">
+    <div class="content">
+      <h2>Privacy Policy</h2>
+      <p><input type="checkbox" data-bind="checked: locationEnabled" /> Allow Property Finder to use your location?</p>
+      <p>Your current location is used to find properties nearby when you click the 'My location' search button. Your location is not stored or shared
+      in any way.</p>
+
+      <h2>About</h2>
+      <p>Property Finder is an experiment in creating Windows Phone 7 applications using JavaScript / HTML5. It uses a combination of the following technologies:</p>
+      <ul>
+        <li><b>jQuery</b> - everyone's favourite JavaScript library!</li>
+        <li><b>PhoneGap</b> - a cross-mobile framework which provides a mechanism for wrapping JavaScript applications up within a native wrapper.</li>
+        <li><b>KnockoutJS</b> - a JavaScript MVVM framework.</li>
+      </ul>
+      <p>In implementing this application I hit upon a number of obstacles which I have written about in my blog. However, I <i>do</i> think that HTML5 is a viable technology for creating mobile applications and more specifically for writing applications that target multiple mobile OSs (iOS, Android, WP7, ...)</p>
+      <p><b>@ColinEberhardt</b></p>      
+    </div>
+  </script>
+  <script id="favouritesView" type="text/x-jquery-tmpl">
+    <div class="content">
+      <h2>Favourites</h2>
+      <ul class="propertyList" data-bind='template: { name: "propertyThumbnailView", foreach: properties }'/>
+    </div>
+  </script>
+  <script id="searchResultsView" type="text/x-jquery-tmpl">
+    <div class="content">
+      <div>
+        <div class="summary">
+          Search results for <span class="searchString" data-bind="text: searchLocation.displayString"/>, showing
+          <span data-bind="text: properties().length"/> of 
+          <span data-bind="text: totalResults"/> matching properties
+        </div>
+        
+        <ul class="propertyList" data-bind='template: { name: "propertyThumbnailView", foreach: properties }'/>
+                  
+        <table style="width:100%">
+          <tr><td>              
+            <div class="summary">
+              <span data-bind="text: properties().length"/> of 
+              <span data-bind="text: totalResults"/>
+            </div>
+          </td><td style="text-align:right">
+            <button data-bind="click: loadMore, enable: isLoading() == false, visible: properties().length!==totalResults">Load more ...</button>
+          </td></tr>
+        </table>
+        
+      </div>
+    </div>
+  </script>
+  <script id="propertyView" type="text/x-jquery-tmpl">
+    <div class="content noScroll">
+      <div class="propertyView">
+        <h1 data-bind="text: title"/>
+        <img data-bind="attr: { src: thumbnailUrl }"/>
+        <ul class="propertyDetails">
+          <li class="price">£<span data-bind="text: price"/></li>
+          <li class="propertyType"><span data-bind="text: bedrooms"/> bed <span data-bind="text: propertyType"/><span data-bind="visible: bathrooms !== ''">, <span data-bind="text: bathrooms"/> bathroom</span></li>
+        </ul>
+        <div data-bind="text: summary"/>
+      </div>
+    </div>
+    
+    <div class="appBar">
+      <div class="more"><div class="pip"/><div class="pip"/><div class="pip"/></div>
+      <div class="icons">
+        <div class="icon"
+            data-bind="click: function() { propertySearchViewModel.addToFavourites.call(propertySearchViewModel, this); }">
+          <div data-bind="visible: isFavourite() == false">
+            <img src="img/favourites.png" />
+            <div class="iconText">add to favourites</div>
+          </div>
+          <div data-bind="visible: isFavourite"> 
+            <img src="img/favourited.png">
+            <div class="iconText">remove from favourites</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </script>
+  <script id="propertyThumbnailView" type="text/x-jquery-tmpl">
+    <li class="property"
+        data-bind="click: select">
+      <div class="thumbnailContainer">
+        <img data-bind="attr: { src: thumbnailUrl }" class="thumbnail fade-in"/>
+      </div>
+      <ul class="propertyDetails">
+        <li class="price">£<span data-bind="text: price"/></li>
+        <li class="propertyType"><span data-bind="text: bedrooms"/> bed <span data-bind="text: propertyType"/></li>
+        <li class="title" data-bind="text: title"></li>
+      </ul>
+    </li>
+  </script>
+  <script id="locationTemplate" type="text/x-jquery-tmpl">
+    <li data-bind="click: propertySearchViewModel.selectLocation"><span data-bind="text: displayString"></li>
+  </script>
+  <div id="app" />
+</body>
+</html>
